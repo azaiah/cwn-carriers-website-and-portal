@@ -134,6 +134,7 @@ function Shell() {
           <button onClick={() => setUser(null)} className="p-2 hover:bg-white/10 text-graphite-300" title="Sign out"><LogOut size={16} /></button>
         </div>
         <button onClick={() => { if (armReset) { reset(); setArmReset(false) } else { setArmReset(true); setTimeout(() => setArmReset(false), 4000) } }} className={`w-full flex items-center justify-center gap-2 text-[12px] font-mono uppercase tracking-[.14em] py-1 ${armReset ? 'text-crimson-400' : 'text-graphite-400 hover:text-white'}`}><RotateCcw size={12} /> {armReset ? 'Click again to reset' : 'Reset demo'}</button>
+        <a href="https://dataisdata.com" target="_blank" rel="noreferrer" className="block text-center text-[11.5px] text-graphite-400 hover:text-white">Powered by <span className="font-semibold text-graphite-200">DataIsData</span></a>
       </div>
     </div>
   )

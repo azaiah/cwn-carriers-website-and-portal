@@ -37,6 +37,7 @@ export function scoreOpp(o: Opportunity, b: Brain): Scored {
   if (blocked) stops.push(`${blocked} is on the never-haul list`)
 
   const distance = miles(b.home, o.origin)
+  if (distance > b.service.radiusMiles * 1.5) stops.push(`Picks up ${distance} mi from Chesterfield, far outside the ${b.service.radiusMiles} mi service area`)
   const tripMiles = o.miles ?? (o.destination ? miles(o.origin, o.destination) : 0)
 
   // ---------- factors (0..1) ----------
