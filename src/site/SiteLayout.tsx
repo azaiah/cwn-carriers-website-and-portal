@@ -108,7 +108,7 @@ export default function SiteLayout() {
         <div className="border-t border-white/10">
           <div className="max-w-7xl mx-auto px-4 md:px-6 py-5 flex flex-col md:flex-row gap-2 justify-between text-[12.5px] text-graphite-400">
             <span>© {new Date().getFullYear()} {SITE.legal}. All rights reserved.</span>
-            <span>Powered by <a href="https://dataisdata.com" target="_blank" rel="noopener" className="font-semibold text-graphite-200 underline-offset-4 hover:underline hover:text-white">DataIsData</a></span>
+            <span className="inline-flex items-center gap-1.5">Powered by <a href="https://dataisdata.com" target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 font-semibold text-graphite-200 underline-offset-4 hover:underline hover:text-white"><img src={`${import.meta.env.BASE_URL}assets/dataisdata-icon.png`} alt="" width={15} height={16} className="h-4 w-auto" />DataIsData</a></span>
           </div>
         </div>
       </footer>
