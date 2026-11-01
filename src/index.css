@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+  body { @apply font-sans text-ivory bg-onyx; }
+  ::selection { background: #C1121F; color: #fff; }
+  h1, h2, h3, h4 { @apply font-display; letter-spacing: .005em; }
+  :focus-visible { outline: 2px solid #E0303C; outline-offset: 2px; }
+  * { scrollbar-width: thin; scrollbar-color: #2E333A transparent; }
+}
+
+@layer components {
+  /* textures */
+  .tex-asphalt { background-color: #0D0E10; background-image: url('/assets/asphalt.svg'); background-size: 400px; }
+  .tex-grain { position: relative; }
+  .tex-grain::after { content: ''; position: absolute; inset: 0; pointer-events: none; background-image: url('/assets/grain.svg'); opacity: .07; mix-blend-mode: overlay; }
+  .tex-tread { background-image: url('/assets/tread.svg'); }
+  .tex-lanes { background-image: url('/assets/lanes.svg'); }
+
+  /* italic slanted buttons echo the logo */
+  .btn { @apply relative inline-flex items-center justify-center gap-2 font-display font-bold uppercase tracking-[.08em] text-[15px] px-6 h-12 transition-all duration-200 select-none whitespace-nowrap; clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); }
+  .btn-sm { @apply h-9 px-4 text-[13px]; clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%); }
+  .btn-red { @apply bg-crimson text-white hover:bg-crimson-400; box-shadow: inset 0 1px 0 rgba(255,255,255,.25), inset 0 -3px 0 rgba(0,0,0,.25); }
+  .btn-red::before { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,.28) 50%, transparent 70%); transform: translateX(-120%); transition: transform .6s ease; }
+  .btn-red:hover::before { transform: translateX(120%); }
+  .btn-ivory { @apply bg-ivory text-onyx hover:bg-white; box-shadow: inset 0 -3px 0 rgba(0,0,0,.15); }
+  .btn-ghost { @apply bg-white/5 text-ivory hover:bg-white/10; box-shadow: inset 0 0 0 1px rgba(242,239,232,.18); }
+  .btn-dark { @apply bg-onyx text-ivory hover:bg-onyx-700; }
+
+  .eyebrow { @apply font-mono text-[11px] uppercase tracking-[.22em] text-crimson-400; }
+  .h-display { @apply font-display font-extrabold uppercase leading-[.92] tracking-[-.005em]; }
+  .slant { @apply italic; }
+
+  .plate { @apply bg-onyx-800 border border-white/[.06] shadow-plate; }
+  .card-light { @apply bg-white border border-ivory-200 shadow-[0_1px_0_rgba(0,0,0,.03),0_10px_30px_-18px_rgba(13,14,16,.35)]; }
+
+  .chip { @apply inline-flex items-center gap-1.5 h-6 px-2 text-[11px] font-mono uppercase tracking-wider rounded-[3px]; }
+  .stamp { @apply inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[.18em] border px-2 py-1; }
+
+  .input { @apply w-full h-11 bg-onyx-850 border border-white/10 px-3 text-[15px] text-ivory placeholder:text-graphite-400 focus:border-crimson-400 focus:outline-none transition; }
+  .input-light { @apply w-full h-11 bg-white border border-ivory-300 px-3 text-[15px] text-onyx placeholder:text-graphite-300 focus:border-crimson focus:outline-none transition; }
+  .label { @apply block font-mono text-[11px] uppercase tracking-[.16em] text-graphite-300 mb-1.5; }
+
+  .tbl { @apply w-full text-left text-[14px]; }
+  .tbl th { @apply font-mono text-[10.5px] uppercase tracking-[.16em] text-graphite-300 font-medium py-2.5 px-3 border-b border-white/10 whitespace-nowrap; }
+  .tbl td { @apply py-3 px-3 border-b border-white/[.05] align-top; }
+  .tbl tbody tr { @apply hover:bg-white/[.025] transition-colors; }
+}
+
+/* road divider */
+.road-line { height: 4px; background: repeating-linear-gradient(90deg, #E3A72F 0 28px, transparent 28px 52px); opacity: .85; }
+.speed-bg { background-image: url('/assets/speed.svg'); background-repeat: no-repeat; background-size: contain; }
+
+@media print {
+  body { background: #fff !important; color: #000 !important; }
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+}
+.print-only { display: none; }
