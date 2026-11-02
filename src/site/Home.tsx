@@ -31,13 +31,13 @@ export default function Home() {
           <div>
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: .5 }} className="inline-flex items-center gap-2.5 bg-white/5 ring-1 ring-white/10 px-3 py-1.5 mb-6">
               <span className="w-2 h-2 rounded-full bg-signal-green animate-pulseDot" />
-              <span className="font-mono text-[11.5px] uppercase tracking-[.18em] text-graphite-200">Trucks rolling out of Chesterfield, VA</span>
+              <span className="font-mono text-[11.5px] uppercase tracking-[.18em] text-graphite-200">LTL · Final-mile · Expedited · Chesterfield, VA</span>
             </motion.div>
             <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .7, delay: .05 }} className="h-display text-[54px] sm:text-[76px] lg:text-[92px]">
-              Freight moved<br />like our name<br />is on the truck.<br /><span className="text-crimson-400 italic">It is.</span>
+              Box-truck freight<br />across Virginia,<br /><span className="text-crimson-400 italic">on time.</span>
             </motion.h1>
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .3 }} className="text-[18px] md:text-[19px] text-graphite-200 max-w-xl mt-6 leading-relaxed">
-              CWN Carriers runs LTL, final-mile and expedited box-truck freight across Virginia and the Mid-Atlantic. A small fleet, fully insured, and an owner who knows where every load is.
+              Pallets, partial loads and final-mile deliveries across Virginia and the Mid-Atlantic. A small, fully insured fleet run by an owner who picks up the phone and knows where every load is.
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .4 }} className="flex flex-wrap gap-3 mt-8">
               <Link to="/shippers" className="btn btn-red h-14 px-8 text-[16px]">Get a freight quote <ArrowRight size={18} /></Link>
