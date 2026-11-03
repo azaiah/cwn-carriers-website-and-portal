@@ -212,7 +212,7 @@ export default function Home() {
             <div className="font-mono text-[11px] uppercase tracking-[.22em] text-white/80 mb-3">Now growing</div>
             <h3 className="h-display text-[44px]">Drive for CWN.</h3>
             <p className="text-white/85 mt-3 max-w-md">Non-CDL box truck drivers who take pride in the job. Local routes, home most nights, real respect.</p>
-            <span className="btn btn-ivory mt-6">Apply now <ArrowRight size={16} className="group-hover:translate-x-1 transition" /></span>
+            <span className="btn btn-ivory mt-6">Get pre-qualified <ArrowRight size={16} className="group-hover:translate-x-1 transition" /></span>
           </div>
         </Link>
       </section>

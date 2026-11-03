@@ -34,8 +34,9 @@ export default function Drive() {
           <div className="bg-onyx text-ivory p-7 md:p-10 relative overflow-hidden self-start">
             <div className="absolute -right-16 -top-16 w-56 h-56 bg-crimson/80 rotate-[24deg]" />
             <div className="relative">
-              <div className="eyebrow mb-2">Apply in 2 minutes</div>
-              <h3 className="h-display text-[36px]">Driver application</h3>
+              <div className="eyebrow mb-2">Takes 2 minutes</div>
+              <h3 className="h-display text-[36px]">Driver pre-qualification</h3>
+              <p className="text-graphite-200 text-[15px] mt-2">A quick check to see if you're a fit. If you are, we'll call you and send the full application.</p>
               {sent ? <div className="mt-6 flex gap-3"><CheckCircle2 className="text-signal-green shrink-0" /><p>Thanks {f.name.split(' ')[0]}! We'll call you within a couple of days.</p></div> : (
                 <form className="grid gap-3.5 mt-6" onSubmit={async e => { e.preventDefault(); await submitForm('driver', f); setSent(true) }}>
                   <input required className="input" placeholder="Full name" value={f.name} onChange={set('name')} />
@@ -48,7 +49,7 @@ export default function Drive() {
                     <label><span className="label">Box truck experience?</span><select className="input" value={f.boxTruck} onChange={set('boxTruck')}><option>Yes</option><option>No</option></select></label>
                   </div>
                   <textarea rows={3} className="input h-auto py-2" placeholder="Tell us about yourself (optional)" value={f.notes} onChange={set('notes')} />
-                  <button className="btn btn-red mt-1">Submit application</button>
+                  <button className="btn btn-red mt-1">Submit pre-qualification</button>
                 </form>
               )}
             </div>
