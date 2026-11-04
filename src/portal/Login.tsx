@@ -15,6 +15,10 @@ export function Login({ onDemo, recovery = false, notice }: { onDemo: () => void
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(notice ? { ok: false, text: notice } : null)
   const back = `${window.location.origin}${import.meta.env.BASE_URL}portal`
+  // Links in emails get opened on phones, where "localhost" means nothing. When testing
+  // on a computer, send email links to the live site instead.
+  const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname)
+  const emailBack = local ? 'https://cwn-carriers-website-portal.netlify.app/portal' : back
   const [google, setGoogle] = useState(false)
   useEffect(() => { googleEnabled().then(setGoogle) }, [])
   const withGoogle = async () => {
@@ -30,11 +34,11 @@ export function Login({ onDemo, recovery = false, notice }: { onDemo: () => void
         const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: pw })
         if (error) setMsg({ ok: false, text: error.message === 'Invalid login credentials' ? 'That email and password don\'t match. Try again or reset your password.' : error.message })
       } else if (view === 'signup') {
-        const { data, error } = await supabase.auth.signUp({ email: email.trim(), password: pw, options: { emailRedirectTo: back } })
+        const { data, error } = await supabase.auth.signUp({ email: email.trim(), password: pw, options: { emailRedirectTo: emailBack } })
         if (error) setMsg({ ok: false, text: error.message })
         else if (!data.session) setMsg({ ok: true, text: `Check ${email.trim()} for a confirmation link, then come back and sign in.` })
       } else if (view === 'forgot') {
-        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: back })
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: emailBack })
         setMsg(error ? { ok: false, text: error.message } : { ok: true, text: 'If that email has an account, a reset link is on its way.' })
       } else {
         const { error } = await supabase.auth.updateUser({ password: pw })
