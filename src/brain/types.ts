@@ -1,4 +1,4 @@
-export type Equipment = 'box26' | 'box16' | 'cargoVan' | 'tractor53' | 'flatbed' | 'reefer' | 'any'
+export type Equipment = 'box26' | 'box16' | 'cargoVan' | 'tractor53' | 'van53' | 'flatbed' | 'reefer' | 'hotshot' | 'powerOnly' | 'any'
 export type OppKind = 'bid' | 'lead' | 'load' | 'partner'
 export type OppStatus = 'new' | 'reviewing' | 'pursuing' | 'submitted' | 'won' | 'lost' | 'passed'
 export type Recurrence = 'one-time' | 'weekly' | 'daily' | 'contract'
@@ -34,6 +34,15 @@ export interface Opportunity {
   status: OppStatus
   sample: boolean           // true = illustrative format; sweep replaces with live postings
   tags?: string[]
+  // ---- load details (Load Finder) ----
+  pickupDate?: string       // ISO date the load is available
+  weightLbs?: number
+  pallets?: number
+  lengthFt?: number
+  fullLoad?: boolean        // posted as a full truckload (needs the whole trailer)
+  rateKnown?: boolean       // false = no rate posted, estValue is our estimate
+  broker?: { name?: string; mc?: string; phone?: string; email?: string }
+  raw?: string              // the original text the load was parsed from
 }
 
 export interface Truck {

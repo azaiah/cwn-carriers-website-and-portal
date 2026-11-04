@@ -14,6 +14,7 @@ export interface Load {
   pickup: string; delivery: string; pallets: number; weight: number; commodity: string
   rate: number; miles: number; truck?: string; driver?: string; status: LoadStatus
   pod?: boolean; bol?: boolean; notes?: string; liftgate?: boolean
+  bolPath?: string; podPath?: string; podName?: string   // files in the company's private document storage
 }
 export interface Driver { id: string; name: string; phone: string; status: 'on duty' | 'off' | 'driving'; truck?: string; cdl: boolean; hired: string }
 export interface Customer { id: string; name: string; type: 'Shipper' | 'Broker' | 'Partner' | 'Government'; contact: string; email: string; phone: string; city: string; terms: string; loads: number; revenue: number; lastLoad?: string; notes?: string }

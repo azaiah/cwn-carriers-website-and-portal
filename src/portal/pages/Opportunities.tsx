@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Ban, CheckCircle2, ExternalLink, Info, MinusCircle, PlusCircle, Search, Send, Sparkles } from 'lucide-react'
 import { usePortal, type ScoredOpp } from '../store'
-import { Drawer, Empty, PageHead, ScoreRing, Verdict, daysUntil, shortDate, usd } from '../../components/ui'
+import { Drawer, Empty, KIND_META, KindBadge, PageHead, ScoreRing, Verdict, daysUntil, shortDate, usd } from '../../components/ui'
+import { stageWord } from '../stages'
 import { draftOutreach } from '../outreach'
 import { LanesMap } from '../../components/LanesMap'
 import type { OppStatus } from '../../brain/types'
@@ -39,7 +40,7 @@ export default function Opportunities() {
 
   return (
     <>
-      <PageHead eyebrow="Bid & lead finder" title="Opportunities" sub="Every bid, prospect, partner program and load, scored by the Company Brain against CWN's trucks, insurance, lanes and money rules." />
+      <PageHead eyebrow="Bid & lead finder" title="Opportunities" sub="Every bid, lead, partner program and load, labeled and scored by the Company Brain against CWN's trucks, insurance, lanes and money rules. Loads open in the Load Finder with the Rate Coach." />
 
       <div className="grid grid-cols-3 gap-3 mb-5">
         {(['Go', 'Maybe', 'Pass'] as const).map(v => (
@@ -52,7 +53,7 @@ export default function Opportunities() {
 
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <div className="flex bg-onyx-850 ring-1 ring-white/[.06]">
-          {KINDS.map(([k, l]) => <button key={k} onClick={() => setKind(k)} className={`px-3.5 h-9 text-[13px] font-semibold ${kind === k ? 'bg-crimson text-white' : 'text-graphite-200 hover:text-white'}`}>{l}</button>)}
+          {KINDS.map(([k, l]) => <button key={k} onClick={() => setKind(k)} className={`px-3.5 h-9 text-[13px] font-semibold flex items-center gap-1.5 ${kind === k ? 'bg-crimson text-white' : 'text-graphite-200 hover:text-white'}`}>{l}<span className="opacity-70 font-mono text-[11px]">{scored.filter(o => (k === 'all' || o.kind === k) && o.status !== 'passed').length}</span></button>)}
         </div>
         <div className="relative flex-1 min-w-[180px] max-w-sm"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-graphite-400" /><input className="input h-9 pl-9 text-[14px]" placeholder="Search org, city, tag…" value={q} onChange={e => setQ(e.target.value)} /></div>
         <label className="flex items-center gap-2 text-[13px] text-graphite-300 ml-auto"><input type="checkbox" checked={showPassed} onChange={e => setShowPassed(e.target.checked)} className="accent-crimson" /> Show passed</label>
@@ -64,15 +65,15 @@ export default function Opportunities() {
           const due = daysUntil(o.dueDate)
           const lead = o.s.reasons.find(r => r.kind === 'stop') ?? o.s.reasons.find(r => r.kind === 'plus')
           return (
-            <button key={o.id} onClick={() => open(o)} className="plate text-left p-4 grid sm:grid-cols-[auto_1fr_auto] gap-4 items-center hover:ring-1 hover:ring-crimson/40 transition">
+            <button key={o.id} onClick={() => o.kind === 'load' ? nav(`/portal/loads?id=${o.id}`) : open(o)} className="plate text-left p-4 grid sm:grid-cols-[auto_1fr_auto] gap-4 items-center hover:ring-1 hover:ring-crimson/40 transition">
               <ScoreRing score={o.s.score} v={o.s.verdict} />
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <span className="chip bg-white/5 text-graphite-200">{o.kind}</span>
+                  <KindBadge kind={o.kind} />
                   <span className="font-mono text-[11px] text-graphite-400">{o.source}</span>
                   {o.sample && <span className="chip bg-white/5 text-graphite-400 ring-1 ring-white/10" title="Illustrative format. The live sweep replaces these with real postings.">Sample</span>}
                   {o.tags?.includes('Inbound') && <span className="chip bg-crimson text-white">New inbound</span>}
-                  {o.status !== 'new' && <span className="chip bg-signal-blue/15 text-signal-blue">{o.status}</span>}
+                  {o.status !== 'new' && <span className="chip bg-signal-blue/15 text-signal-blue">{stageWord(o.kind, o.status)}</span>}
                 </div>
                 <div className="font-display font-bold uppercase text-[19px] leading-tight">{o.title}</div>
                 <div className="text-[13.5px] text-graphite-300 mt-0.5">{o.org} · {o.origin.city}, {o.origin.state}{o.destination ? ` → ${o.destination.city}, ${o.destination.state}` : ''} · {o.s.distance < 5 ? 'local to HQ' : `${o.s.distance} mi from HQ`}</div>
@@ -89,14 +90,14 @@ export default function Opportunities() {
         {!list.length && <Empty>No opportunities match these filters.</Empty>}
       </div>
 
-      <Drawer open={!!sel} onClose={close} wide title={sel ? `${sel.kind.toUpperCase()} · ${sel.org}` : ''}>
+      <Drawer open={!!sel} onClose={close} wide title={sel ? `${KIND_META[sel.kind].label.toUpperCase()} · ${sel.org}` : ''}>
         {sel && (
           <div className="space-y-6">
             <div className="flex gap-5 items-start">
               <ScoreRing score={sel.s.score} v={sel.s.verdict} size={84} />
               <div className="flex-1">
                 <h2 className="font-display font-extrabold uppercase text-[28px] leading-tight">{sel.title}</h2>
-                <div className="flex flex-wrap gap-2 mt-2"><Verdict v={sel.s.verdict} /><span className="chip bg-white/5 text-graphite-200">Grade {sel.s.grade}</span>{sel.sample && <span className="chip bg-white/5 text-graphite-400">Sample format</span>}{sel.naics && <span className="chip bg-white/5 text-graphite-200">NAICS {sel.naics}</span>}</div>
+                <div className="flex flex-wrap gap-2 mt-2"><KindBadge kind={sel.kind} size="md" /><span className="chip bg-white/5 text-graphite-200">{stageWord(sel.kind, sel.status)}</span><Verdict v={sel.s.verdict} /><span className="chip bg-white/5 text-graphite-200">Grade {sel.s.grade}</span>{sel.sample && <span className="chip bg-white/5 text-graphite-400">Sample format</span>}{sel.naics && <span className="chip bg-white/5 text-graphite-200">NAICS {sel.naics}</span>}</div>
               </div>
             </div>
             <p className="text-graphite-200 leading-relaxed">{sel.summary}</p>
@@ -125,9 +126,10 @@ export default function Opportunities() {
 
             <div className="flex flex-wrap gap-2 pt-2 border-t border-white/10">
               <button onClick={() => draft(sel)} className="btn btn-red"><Send size={15} /> Draft outreach</button>
-              <button onClick={() => status(sel, 'pursuing')} className="btn btn-ghost btn-sm">Pursue</button>
-              <button onClick={() => status(sel, 'submitted')} className="btn btn-ghost btn-sm">Submitted</button>
-              <button onClick={() => status(sel, 'won')} className="btn btn-ghost btn-sm"><CheckCircle2 size={14} /> Won</button>
+              <button onClick={() => status(sel, 'pursuing')} className="btn btn-ghost btn-sm">{stageWord(sel.kind, 'pursuing')}</button>
+              <button onClick={() => status(sel, 'submitted')} className="btn btn-ghost btn-sm">{stageWord(sel.kind, 'submitted')}</button>
+              <button onClick={() => status(sel, 'won')} className="btn btn-ghost btn-sm"><CheckCircle2 size={14} /> {stageWord(sel.kind, 'won')}</button>
+              <button onClick={() => nav('/portal/pipeline')} className="btn btn-ghost btn-sm">See in Pipeline</button>
               <button onClick={() => { status(sel, 'passed'); close() }} className="btn btn-ghost btn-sm">Pass</button>
             </div>
           </div>

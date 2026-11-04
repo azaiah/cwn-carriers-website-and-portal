@@ -57,6 +57,58 @@ The portal pulls them on "Run sweep now" (from `/api/opps`) and the Company Brai
 
 Netlify Forms are pre-registered in `index.html`: `quote`, `broker`, `driver`, `contact`.
 
+## Database & logins (Supabase)
+
+The live portal saves to Supabase (project `cwn-carriers`, org DataIsData, East US). The schema is in `supabase/schema.sql`; it has already been run.
+
+- **Invite-only logins.** `invites` lists who may join a company. When someone creates an account with an invited email, a database trigger adds them to `members` with their role (owner, admin, dispatcher, driver). Owners invite people from **Fleet & Drivers → Team logins**.
+- **Everything saves.** Each area of the portal (Company Brain, opportunities, loads, drivers, customers, compliance, outreach, activity) is one row in `portal_state`, saved about 0.7 s after an edit. Other signed-in devices update live (Realtime). Every save is also copied to `portal_history`, so nothing typed is lost.
+- **Security.** Row Level Security on every table: users only see their own company. Drivers can only save loads and activity. Anonymous visitors see nothing.
+- **Files.** BOL photos and signed PODs from the driver app go to the private `documents` storage bucket under `<company_id>/`. Dispatch opens them through short-lived signed links.
+- **Demo mode.** "Try the demo" on the sign-in screen runs the sample-data demo in the browser only, for sales demos.
+- **Keys.** `src/lib/supabase.ts` holds the project URL and the publishable key, which are safe in browser code. Optional overrides: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`. Never put the secret key in `src/`.
+- **New carrier customer?** Insert a row in `companies` and an owner row in `invites`; the same codebase serves them.
+
+## Team, access & messages
+
+`supabase/002_team_messages.sql` (already run on the live project) adds:
+
+- **DataIsData admins** (`platform_admins`: azaiah@, tony@dataisdata.com). They can open every company with the `platform` role, and see and change everything, including the owner. Add a company and every DataIsData admin can open it automatically.
+- **Roles**:
+  - Owner: always every page.
+  - Admin: every page by default; Tequila Samuel (COO) is invited as admin.
+  - Dispatcher: no Money, Brain, Briefing or Team.
+  - Driver: the driver app + messages.
+  - Per-person page lists live in `members.pages` (null = role default) and are edited in **Team & Access** (`/portal/team`).
+  - The page list and defaults are in `src/portal/perms.ts`.
+- **View as**: owners, admins and DataIsData admins can switch the whole portal to anyone's view, from the header picker or the Team page. Writes still happen as the real person.
+- **Messages** (`/portal/messages`):
+  - A team board where posts can be tasks with an assignee, a due date and done/pinned flags.
+  - Private messages between two people. Row Level Security keeps them private, even from admins.
+  - Realtime, with unread badges stored in `message_reads`.
+  - Open tasks also show on Command, and drivers reach messages from their phone screen.
+- **Google sign-in**: the button appears on the sign-in screen automatically once the Google provider is switched on in Supabase (Authentication → Sign In / Providers → Google). Invited emails join their company on first sign-in, whether they use Google or a password.
+
+## Load Finder (`/portal/loads`)
+
+One ranked list of loads from every source CWN is allowed to use. The Company Brain scores each load (equipment, weight, pallets, length, pickup date, overnight runs, insurance), and the Rate Coach (`src/brain/rate.ts`) gives a floor, a target, a counter and a call script.
+
+- **Paste anything:** broker load-list emails, rows copied from a load board, texts. Parser: `src/brain/loadparse.ts`. City lookup: `src/brain/geo.ts` (US ZIP centroids, loaded only on this page).
+- **Broker email inbox:** forward load emails (Gmail/Yahoo forwarding, Zapier, Make or n8n) to:
+  ```
+  POST https://<site>/api/inbox
+  x-ingest-key: <INGEST_KEY>
+  { "text": "<email body>", "subject": "...", "from": "Broker name <email>", "source": "Broker email" }
+  ```
+  Plain-text bodies work too. The portal's "Check inbox" button pulls new messages and turns them into scored loads.
+- **Weekly sweep:** loads can also arrive through `/api/ingest` as `kind: "load"` items.
+- **Book it:** booking a load creates a Dispatch card (status Booked) and moves it to Won in the Pipeline.
+- **Never scrape paid boards.** DAT's terms ban bots and scraping. Connect a customer's own DAT/Truckstop account only through their official partner APIs.
+
+## Pipeline (`/portal/pipeline`)
+
+Every load, bid, lead and partner program on one board (New → Reviewing → Working it → Sent → Won/Booked → Lost), labeled by kind. Stage words change per kind (`src/portal/stages.ts`).
+
 ## The Company Brain
 
 - `src/brain/cwn.ts`: CWN's profile. Facts marked verified come from FMCSA records (Nov 2026). `unknowns` lists what Lawrence still needs to confirm (drives the Knowledge meter).
@@ -79,7 +131,6 @@ Netlify Forms are pre-registered in `index.html`: `quote`, `broker`, `driver`, `
 - Cargo insurance and general liability limits
 - Rate floor, cost per mile, weekly target (Company Brain → Money rules, currently assumed)
 - Service promises on the site: same-day POD & invoice, status texts, inside delivery
-- A business email on a CWN domain (currently the FMCSA-listed Yahoo address)
 
 ## Assets
 

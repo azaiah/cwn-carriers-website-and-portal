@@ -10,7 +10,7 @@ export function miles(a: Place, b: Place): number {
 const money = (n: number) => '$' + Math.round(n).toLocaleString()
 const EQUIP_LABEL: Record<string, string> = {
   box26: '26 ft box truck', box16: '16 ft box truck', cargoVan: 'cargo van', tractor53: "53' tractor-trailer",
-  flatbed: 'flatbed', reefer: 'refrigerated unit', any: 'any equipment',
+  van53: 'dry van', flatbed: 'flatbed', reefer: 'refrigerated unit', hotshot: 'hotshot trailer', powerOnly: 'power-only tractor', any: 'any equipment',
 }
 
 /**
@@ -35,15 +35,38 @@ export function scoreOpp(o: Opportunity, b: Brain): Scored {
     stops.push(`Requires ${money(o.minAutoLiability)} auto liability. CWN carries ${money(b.insurance.autoLiability)}`)
   const blocked = b.service.neverHaul.find(x => o.tags?.some(t => t.toLowerCase() === x.toLowerCase()))
   if (blocked) stops.push(`${blocked} is on the never-haul list`)
+  if (o.equipment === 'powerOnly') stops.push('Power-only: needs a tractor to pull the shipper\'s trailer. CWN runs box trucks')
+  if (o.equipment === 'hotshot') stops.push('Hotshot load: rides on a flatbed trailer behind a pickup. Not in the fleet')
+
+  // ---- size checks (loads) ----
+  const rigs = b.fleet.filter(t => t.status === 'active' && (t.type === 'box26' || t.type === 'box16' || t.type === 'cargoVan'))
+  const capLbs = Math.max(0, ...rigs.map(t => t.maxLbs ?? (t.type === 'box26' ? 10000 : t.type === 'box16' ? 5000 : 3000)))
+  const capPallets = Math.max(0, ...rigs.map(t => t.maxPallets ?? (t.type === 'box26' ? 12 : t.type === 'box16' ? 6 : 2)))
+  const fmt = (n: number) => n.toLocaleString()
+  if (o.kind === 'load' && rigs.length) {
+    if (o.weightLbs && o.weightLbs > capLbs) stops.push(`${fmt(o.weightLbs)} lbs is more than a box truck can carry (about ${fmt(capLbs)} lbs). This is ${o.weightLbs > 20000 ? "53' trailer" : 'two-truck'} freight`)
+    else if (o.pallets && o.pallets > capPallets) stops.push(`${o.pallets} pallets won't fit. A 26' box holds about ${capPallets}`)
+    else if (o.lengthFt && o.lengthFt > 26) stops.push(`Needs ${o.lengthFt} ft of trailer. CWN's boxes are 26 ft`)
+    else if (o.fullLoad && o.equipment === 'van53') stops.push("Posted as a full 53' van load. Too big for a box truck")
+    else if (o.equipment === 'van53' && !o.weightLbs && !o.pallets) reasons.push({ kind: 'minus', text: "Posted for a dry van with no weight or pallet count. Most are full 53' loads, so call to confirm the size first" })
+    else if (o.equipment === 'van53') reasons.push({ kind: 'info', text: `Posted for a dry van, but ${o.weightLbs ? `${fmt(o.weightLbs)} lbs` : `${o.pallets} pallets`} fits a 26' box. Confirm the dock or liftgate` })
+    if (o.weightLbs && o.weightLbs <= capLbs) reasons.push({ kind: 'plus', text: `${fmt(o.weightLbs)} lbs${o.pallets ? `, ${o.pallets} pallets` : ''} fits the box truck` })
+    if (o.pickupDate) {
+      const d = new Date(o.pickupDate); d.setHours(23, 59, 0, 0)
+      if (d.getTime() < Date.now()) stops.push('Pickup date has already passed')
+    }
+  }
 
   const distance = miles(b.home, o.origin)
   if (distance > b.service.radiusMiles * 1.5) stops.push(`Picks up ${distance} mi from Chesterfield, far outside the ${b.service.radiusMiles} mi service area`)
   const tripMiles = o.miles ?? (o.destination ? miles(o.origin, o.destination) : 0)
+  if (o.kind === 'load' && !b.drivers.overnight && tripMiles > 500) stops.push(`${tripMiles}-mile run needs an overnight. CWN's drivers are home every night (Brain setting)`)
 
   // ---------- factors (0..1) ----------
   // 1. Fit: equipment + services + liftgate + cargo insurance + set-aside
   let fit = 0.55
-  if (o.equipment === 'any' || activeTypes.has(o.equipment)) { fit += 0.25; reasons.push({ kind: 'plus', text: `Fits the ${EQUIP_LABEL[o.equipment] ?? o.equipment}` }) }
+  if (o.equipment === 'van53' && !o.weightLbs && !o.pallets) fit -= 0.3
+  if (o.equipment === 'any' || activeTypes.has(o.equipment) || (o.equipment === 'van53' && !stops.length)) { fit += 0.25; if (o.equipment !== 'van53') reasons.push({ kind: 'plus', text: `Fits the ${EQUIP_LABEL[o.equipment] ?? o.equipment}` }) }
   if (o.equipment === 'cargoVan') { fit += 0.1; reasons.push({ kind: 'plus', text: 'Van-sized work. A box truck over-covers it' }) }
   if (o.needsLiftgate) {
     if (anyLiftgate) { fit += 0.1; reasons.push({ kind: 'plus', text: 'Liftgate required and available' }) }
@@ -66,7 +89,10 @@ export function scoreOpp(o: Opportunity, b: Brain): Scored {
 
   // 2. Profit: implied rate per mile vs floor
   let profit = 0.55
-  if (o.valueBasis === 'per-load' && tripMiles > 0) {
+  if (o.kind === 'load' && o.rateKnown === false) {
+    profit = 0.5
+    reasons.push({ kind: 'info', text: 'No rate posted. Call for the rate and use the Rate Coach numbers' })
+  } else if (o.valueBasis === 'per-load' && tripMiles > 0) {
     const rpm = o.estValue / tripMiles
     const ratio = rpm / b.money.rateFloorPerMile
     profit = clamp(0.25 + (ratio - 0.7) * 0.9)

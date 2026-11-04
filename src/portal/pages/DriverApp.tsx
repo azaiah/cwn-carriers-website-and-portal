@@ -1,14 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
-import { Camera, CheckCircle2, LogOut, MapPin, Navigation, PenLine, Phone } from 'lucide-react'
+import { ArrowLeft, Camera, CheckCircle2, LogOut, MapPin, MessageSquare, Navigation, PenLine, Phone } from 'lucide-react'
+import { useComms } from '../comms'
+import Messages from './Messages'
 import { usePortal } from '../store'
 import { Logo } from '../../components/Logo'
 import { shortDate, timeOf } from '../../components/ui'
 import type { Load } from '../data'
 
 /** Mobile driver view: today's loads, BOL photo at pickup, signature POD at delivery. */
-export default function DriverApp({ standalone = false }: { standalone?: boolean }) {
-  const { loads, user, upsertLoad, moveLoad, log, setUser, brain } = usePortal()
-  const me = standalone ? user ?? 'Driver A' : 'Driver A'
+export default function DriverApp({ standalone = false, asName, onExit }: { standalone?: boolean; asName?: string; onExit?: () => void }) {
+  const { loads, user, upsertLoad, log, setUser, brain, uploadDoc, mode } = usePortal()
+  const { totalUnread } = useComms()
+  const [chat, setChat] = useState(false)
+  const me = asName ?? (standalone ? user ?? 'Driver A' : 'Driver A')
   const mine = loads.filter(l => l.driver === me && ['booked', 'dispatched', 'transit', 'delivered'].includes(l.status)).sort((a, b) => a.pickup.localeCompare(b.pickup))
   const [sig, setSig] = useState<Load | null>(null)
 
@@ -18,7 +22,14 @@ export default function DriverApp({ standalone = false }: { standalone?: boolean
         <Logo compact className="h-9 w-auto" />
         <div className="text-right"><div className="font-semibold text-[14px]">{me}</div><div className="text-[11px] font-mono text-signal-green">● ON DUTY</div></div>
       </div>
-      <div className="p-4 space-y-3">
+      {chat ? <div className="p-3">
+        <button onClick={() => setChat(false)} className="flex items-center gap-2 text-[13px] text-graphite-300 hover:text-white mb-3"><ArrowLeft size={14} /> Back to my loads</button>
+        <Messages compact />
+      </div> : <div className="p-4 space-y-3">
+        <button onClick={() => setChat(true)} className="w-full flex items-center gap-3 p-3 bg-onyx-800 ring-1 ring-white/10 hover:ring-crimson/50 text-left">
+          <MessageSquare size={18} className="text-crimson-400" /><span className="flex-1 font-semibold text-[14.5px]">Messages &amp; team board</span>
+          {totalUnread > 0 && <span className="chip bg-crimson text-white h-5 px-1.5">{totalUnread}</span>}
+        </button>
         <div className="eyebrow">Your loads</div>
         {mine.map(l => (
           <div key={l.id} className="bg-onyx-800 ring-1 ring-white/10 overflow-hidden">
@@ -34,7 +45,12 @@ export default function DriverApp({ standalone = false }: { standalone?: boolean
                 <a href={`https://maps.google.com/?daddr=${encodeURIComponent(`${l.status === 'transit' ? l.destination.city : l.origin.city}, ${l.origin.state}`)}`} target="_blank" rel="noreferrer" className="btn btn-sm btn-ghost">Navigate</a>
                 {(l.status === 'booked' || l.status === 'dispatched') && (
                   <label className="btn btn-sm btn-red cursor-pointer"><Camera size={14} /> BOL &amp; go
-                    <input type="file" accept="image/*" capture="environment" className="hidden" onChange={() => { upsertLoad({ ...l, bol: true, status: 'transit' }); log(`${me} picked up ${l.ref}, BOL photo uploaded`, 'load', me) }} />
+                    <input type="file" accept="image/*" capture="environment" className="hidden" onChange={async e => {
+                      const file = e.target.files?.[0]
+                      const path = file && mode === 'live' ? await uploadDoc(file, `${l.ref}-BOL-${file.name}`) : null
+                      upsertLoad({ ...l, bol: true, status: 'transit', bolPath: path ?? l.bolPath })
+                      log(`${me} picked up ${l.ref}, BOL photo ${path || mode === 'demo' ? 'uploaded' : 'taken (upload failed, retry from Documents)'}`, 'load', me)
+                    }} />
                   </label>
                 )}
                 {l.status === 'transit' && <button onClick={() => setSig(l)} className="btn btn-sm btn-red"><PenLine size={14} /> Deliver</button>}
@@ -45,10 +61,14 @@ export default function DriverApp({ standalone = false }: { standalone?: boolean
         ))}
         {!mine.length && <p className="text-graphite-300 text-sm text-center py-10">No loads assigned. Enjoy the break.</p>}
         <a href={`tel:${brain.company.phone}`} className="btn btn-ghost w-full mt-2"><Phone size={15} /> Call dispatch</a>
-        {standalone && <button onClick={() => setUser(null)} className="w-full text-[12px] font-mono uppercase tracking-[.14em] text-graphite-400 py-3 flex items-center justify-center gap-2"><LogOut size={12} /> Sign out</button>}
-      </div>
+        {standalone && <button onClick={() => onExit ? onExit() : setUser(null)} className="w-full text-[12px] font-mono uppercase tracking-[.14em] text-graphite-400 py-3 flex items-center justify-center gap-2"><LogOut size={12} /> {onExit ? 'Exit driver view' : 'Sign out'}</button>}
+      </div>}
 
-      {sig && <Signature onCancel={() => setSig(null)} onDone={() => { moveLoad(sig.id, 'delivered'); log(`${me} delivered ${sig.ref} in ${sig.destination.city}, POD signed`, 'load', me); setSig(null) }} load={sig} />}
+      {sig && <Signature onCancel={() => setSig(null)} load={sig} onDone={async (png, receiver) => {
+        const path = mode === 'live' && png ? await uploadDoc(png, `${sig.ref}-POD.png`) : null
+        upsertLoad({ ...sig, status: 'delivered', pod: true, podName: receiver, podPath: path ?? sig.podPath })
+        log(`${me} delivered ${sig.ref} in ${sig.destination.city}, POD signed by ${receiver}`, 'load', me); setSig(null)
+      }} />}
     </div>
   )
 
@@ -61,7 +81,7 @@ export default function DriverApp({ standalone = false }: { standalone?: boolean
   )
 }
 
-function Signature({ onDone, onCancel, load }: { onDone: () => void; onCancel: () => void; load: Load }) {
+function Signature({ onDone, onCancel, load }: { onDone: (png: Blob | null, receiver: string) => void; onCancel: () => void; load: Load }) {
   const ref = useRef<HTMLCanvasElement>(null)
   const [has, setHas] = useState(false)
   const [name, setName] = useState('')
@@ -87,7 +107,7 @@ function Signature({ onDone, onCancel, load }: { onDone: () => void; onCancel: (
         <div className="text-[11px] text-graphite mt-1">Sign above</div>
         <div className="grid grid-cols-2 gap-2 mt-4">
           <button onClick={onCancel} className="btn btn-sm bg-white ring-1 ring-ivory-300">Cancel</button>
-          <button disabled={!has || !name} onClick={onDone} className="btn btn-sm btn-red disabled:opacity-40">Confirm delivery</button>
+          <button disabled={!has || !name} onClick={() => ref.current ? ref.current.toBlob(b => onDone(b, name), 'image/png') : onDone(null, name)} className="btn btn-sm btn-red disabled:opacity-40">Confirm delivery</button>
         </div>
       </div>
     </div>

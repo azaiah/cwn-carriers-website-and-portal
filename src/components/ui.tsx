@@ -1,4 +1,4 @@
-import { X } from 'lucide-react'
+import { Handshake, Landmark, Target, Truck, X } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { ReactNode } from 'react'
 
@@ -9,6 +9,20 @@ export const daysUntil = (s?: string) => s ? Math.ceil((new Date(s).getTime() - 
 export const ago = (s: string) => {
   const m = Math.round((Date.now() - new Date(s).getTime()) / 60000)
   if (m < 1) return 'just now'; if (m < 60) return `${m}m ago`; const h = Math.round(m / 60); if (h < 24) return `${h}h ago`; return `${Math.round(h / 24)}d ago`
+}
+
+/** One label everywhere for what kind of opportunity something is. */
+export const KIND_META = {
+  load: { label: 'Load', plural: 'Loads', icon: Truck, cls: 'bg-signal-blue/15 text-signal-blue ring-signal-blue/40', hint: 'A freight load to haul now (broker, marketplace or shipper)' },
+  lead: { label: 'Lead', plural: 'Leads', icon: Target, cls: 'bg-signal-green/15 text-signal-green ring-signal-green/40', hint: 'A company that could become a regular customer' },
+  bid: { label: 'Bid', plural: 'Bids', icon: Landmark, cls: 'bg-signal-amber/15 text-signal-amber ring-signal-amber/40', hint: 'A government or company contract you submit a bid for' },
+  partner: { label: 'Partner', plural: 'Partners', icon: Handshake, cls: 'bg-white/10 text-ivory ring-white/25', hint: 'A program or company that sends you work (Amazon Relay, CEVA, couriers)' },
+} as const
+export type KindKey = keyof typeof KIND_META
+
+export function KindBadge({ kind, size = 'sm' }: { kind: KindKey; size?: 'sm' | 'md' }) {
+  const m = KIND_META[kind]
+  return <span title={m.hint} className={`chip ring-1 ${m.cls} ${size === 'md' ? 'h-7 px-2.5 text-[12px]' : ''}`}><m.icon size={size === 'md' ? 13 : 11} />{m.label}</span>
 }
 
 export function Verdict({ v, score }: { v: 'Go' | 'Maybe' | 'Pass'; score?: number }) {

@@ -11,13 +11,28 @@ export const GUIDE: { path: string; title: string; what: string; try: string[] }
     try: ['Look at "Top real prospects". These are real Richmond-area companies, scored for CWN', 'Click "Run sweep now" to pull the newest bids and leads', 'Click any prospect to see why it scored the way it did'],
   },
   {
+    path: 'messages', title: 'Messages',
+    what: 'One place to talk to the team. The team board is for updates and tasks everyone should see. Private messages are only between two people. A red number means something new.',
+    try: ['Post an update on the team board', 'Click Task, pick a person and a due date, and post it. It shows up on their Command page', 'Click a name on the left to message them privately'],
+  },
+  {
+    path: 'loads', title: 'Load Finder',
+    what: 'Loads from your inbox, marketplaces, the weekly sweep and anything you paste, in one list. The Brain checks each one against your box trucks, and the Rate Coach gives you a floor, a target and the number to say back.',
+    try: ['Paste a broker load list into "Add loads" and watch it get scored', 'Change "Truck starts from" to see loads near where a truck will be empty', 'Open a load to see the Rate Coach script, then book it straight to Dispatch'],
+  },
+  {
+    path: 'pipeline', title: 'Pipeline',
+    what: 'Every load, bid, lead and partner program you are working, from found to won. Each card is labeled so you always know what it is.',
+    try: ['Filter to just Loads or just Bids with the tabs', 'Move a card forward with the arrow as it progresses', 'Booked loads show a link to their Dispatch card'],
+  },
+  {
     path: 'dispatch', title: 'Dispatch board',
     what: 'Every load from quote to paid, in columns. Move a card to the next column as the load moves.',
     try: ['Drag a load from Booked to Dispatched', 'Click a load to assign a truck and driver and see its rate per mile', 'Click "New load" to quote a run and see the suggested price'],
   },
   {
     path: 'opportunities', title: 'Bids & leads',
-    what: 'Government bids, companies to pitch, partner programs and loads, each scored 0–100. Green means go after it, amber means maybe, grey means the Brain passed and tells you why.',
+    what: 'Government bids, companies to pitch and partner programs, each labeled and scored 0–100. Green means go after it, amber means maybe, grey means the Brain passed and tells you why.',
     try: ['Open a green "Go" lead and read "Why it fits CWN"', 'Open a grey "Pass" to see what blocked it (hazmat, CDL, reefer…)', 'Hit "Draft outreach" to have a first email written for you'],
   },
   {
@@ -59,6 +74,11 @@ export const GUIDE: { path: string; title: string; what: string; try: string[] }
     path: 'documents', title: 'Documents',
     what: 'Invoices, rate confirmations, bills of lading and a capability statement, filled in from your load records so the numbers always match.',
     try: ['Switch between document types at the top', 'Pick a different load to fill the document'],
+  },
+  {
+    path: 'team', title: 'Team & access',
+    what: 'Who can sign in and what each person can open. Use View as to see the portal exactly the way someone else sees it.',
+    try: ['Click View as next to a person, then Exit in the yellow bar to come back', 'Click Edit to change someone\'s title or the pages they can open', 'Invite a new driver with the same name as on the Fleet list'],
   },
   {
     path: 'driver', title: 'Driver app',

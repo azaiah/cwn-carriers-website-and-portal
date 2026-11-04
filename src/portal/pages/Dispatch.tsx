@@ -3,6 +3,13 @@ import { ChevronRight, FileCheck2, FileText, Plus, Truck } from 'lucide-react'
 import { usePortal } from '../store'
 import { LOAD_STAGES, type Load, type LoadStatus } from '../data'
 import { Drawer, PageHead, shortDate, timeOf, usd } from '../../components/ui'
+import { supabase } from '../../lib/supabase'
+
+// Private files open through a short-lived signed link.
+const openDoc = async (path: string) => {
+  const { data } = await supabase.storage.from('documents').createSignedUrl(path, 300)
+  if (data?.signedUrl) window.open(data.signedUrl, '_blank', 'noopener')
+}
 import { PLACES } from '../../brain/cwn'
 import { miles } from '../../brain/score'
 import { LanesMap } from '../../components/LanesMap'
@@ -40,7 +47,7 @@ export default function Dispatch() {
                     <div className="font-display font-bold uppercase text-[16px] mt-1 leading-tight">{l.origin.city} <ChevronRight size={13} className="inline -mt-0.5 text-crimson-400" /> {l.destination.city}</div>
                     <div className="text-[12.5px] text-graphite-300 mt-1">{l.customer}</div>
                     <div className="flex items-center justify-between mt-2 text-[11.5px] text-graphite-400">
-                      <span>{shortDate(l.pickup)} · {l.pallets} plt · {l.miles} mi</span>
+                      <span>{shortDate(l.pickup)} · {l.pallets ? `${l.pallets} plt` : l.weight ? `${l.weight.toLocaleString()} lbs` : 'size TBD'} · {l.miles} mi</span>
                       {l.truck ? <span className="flex items-center gap-1 text-graphite-200"><Truck size={12} />{l.truck}</span> : ['booked', 'quoted'].includes(l.status) && <span className="text-signal-amber">No truck</span>}
                     </div>
                   </button>
@@ -64,7 +71,7 @@ export default function Dispatch() {
                 {[['Rate', usd(sel.rate)], ['Per mile', '$' + rpm.toFixed(2)], ['Est. margin', usd(sel.rate - cost)]].map(([k, v]) => <div key={k} className="bg-onyx-850 p-3"><div className="label">{k}</div><div className={`font-display font-extrabold text-[24px] ${k === 'Per mile' && rpm < brain.money.rateFloorPerMile ? 'text-signal-amber' : ''}`}>{v}</div></div>)}
               </div>
               <dl className="grid grid-cols-2 gap-4 text-[14px]">
-                {[['Pickup', `${shortDate(sel.pickup)} ${timeOf(sel.pickup)} · ${sel.origin.city}, ${sel.origin.state}`], ['Delivery', `${shortDate(sel.delivery)} ${timeOf(sel.delivery)} · ${sel.destination.city}, ${sel.destination.state}`], ['Freight', `${sel.pallets} pallets · ${sel.weight.toLocaleString()} lbs`], ['Commodity', sel.commodity], ['Miles', `${sel.miles}`], ['Liftgate', sel.liftgate ? 'Yes' : 'No']].map(([k, v]) => <div key={k}><dt className="label">{k}</dt><dd>{v}</dd></div>)}
+                {[['Pickup', `${shortDate(sel.pickup)} ${timeOf(sel.pickup)} · ${sel.origin.city}, ${sel.origin.state}`], ['Delivery', `${shortDate(sel.delivery)} ${timeOf(sel.delivery)} · ${sel.destination.city}, ${sel.destination.state}`], ['Freight', `${sel.pallets} pallets · ${sel.weight.toLocaleString()} lbs`], ['Commodity', sel.commodity], ['Miles', `${sel.miles}`], ['Liftgate', sel.liftgate ? 'Yes' : 'No'], ...(sel.notes ? [['Source', sel.notes]] : [])].map(([k, v]) => <div key={k}><dt className="label">{k}</dt><dd>{v}</dd></div>)}
               </dl>
               <div className="grid grid-cols-2 gap-3">
                 <label><span className="label">Truck</span>
@@ -78,7 +85,9 @@ export default function Dispatch() {
               </div>
               <div className="flex gap-2">
                 <span className={`chip ${sel.bol ? 'bg-signal-green/15 text-signal-green' : 'bg-white/5 text-graphite-300'}`}><FileText size={12} /> BOL {sel.bol ? 'on file' : 'pending'}</span>
-                <span className={`chip ${sel.pod ? 'bg-signal-green/15 text-signal-green' : 'bg-white/5 text-graphite-300'}`}><FileCheck2 size={12} /> POD {sel.pod ? 'signed' : 'pending'}</span>
+                <span className={`chip ${sel.pod ? 'bg-signal-green/15 text-signal-green' : 'bg-white/5 text-graphite-300'}`}><FileCheck2 size={12} /> POD {sel.pod ? `signed${sel.podName ? ` by ${sel.podName}` : ''}` : 'pending'}</span>
+                {sel.bolPath && <button onClick={() => openDoc(sel.bolPath!)} className="chip bg-white/5 text-graphite-200 hover:text-white">View BOL photo</button>}
+                {sel.podPath && <button onClick={() => openDoc(sel.podPath!)} className="chip bg-white/5 text-graphite-200 hover:text-white">View signature</button>}
               </div>
               <div>
                 <div className="label">Move to stage</div>

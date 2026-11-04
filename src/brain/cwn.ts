@@ -16,7 +16,7 @@ export const DEFAULT_BRAIN: Brain = {
     address: '6824 Rossville Dr, Chesterfield, VA 23832',
     phone: '(804) 787-4757',
     cell: '(804) 603-6242',
-    email: 'cwncarriers@yahoo.com',
+    email: 'lsamuel@cwn-carriers.com',
     authorityServed: '2025-08-15',
     insuranceEffective: '2025-07-22',
     mcs150: '2026-01-31',

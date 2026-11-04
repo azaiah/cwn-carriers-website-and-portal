@@ -7,7 +7,7 @@ export const SITE = {
   phone: '(804) 787-4757',           // verified (FMCSA)
   phoneHref: 'tel:+18047874757',
   cell: '(804) 603-6242',            // verified (FMCSA census)
-  email: 'cwncarriers@yahoo.com',    // verified (FMCSA). TODO: move to dispatch@cwncarriers.com once domain is live
+  email: 'lsamuel@cwn-carriers.com', // Lawrence's Google Workspace address (cwn-carriers.com)
   address: '6824 Rossville Dr, Chesterfield, VA 23832',
   usdot: '4444839',
   mc: '1750751',

@@ -4,7 +4,8 @@ import { AlertTriangle, ArrowRight, Brain, DollarSign, Loader2, Radar, RefreshCw
 import { usePortal } from '../store'
 import { loadStats } from '../calc'
 import { LanesMap } from '../../components/LanesMap'
-import { PageHead, Panel, ScoreRing, Stat, Verdict, ago, shortDate, timeOf, usd } from '../../components/ui'
+import { useComms } from '../comms'
+import { PageHead, Panel, ScoreRing, Stat, Verdict, ago, shortDate, timeOf, usd, KindBadge } from '../../components/ui'
 import { brainCompleteness } from '../../brain/score'
 
 export default function Command() {
@@ -18,6 +19,8 @@ export default function Command() {
   const comp = brainCompleteness(brain)
   const hour = new Date().getHours()
 
+  const { openTasks, me, update } = useComms()
+  const myTasks = openTasks.filter(t => !t.assignee || t.assignee === me.id).sort((a, b) => (a.due ?? '9').localeCompare(b.due ?? '9')).slice(0, 4)
   const sweep = async () => {
     setSweeping(true)
     const n = await runSweep()
@@ -65,10 +68,10 @@ export default function Command() {
         <Panel title={<span className="flex items-center gap-2"><Brain size={16} className="text-crimson-400" /> Top real prospects</span>} right={<Link to="/portal/opportunities" className="text-[12px] font-mono uppercase tracking-[.14em] text-graphite-300 hover:text-white flex items-center gap-1">All <ArrowRight size={13} /></Link>} pad={false}>
           <div className="divide-y divide-white/[.05]">
             {top.map(o => (
-              <Link to={`/portal/opportunities?id=${o.id}`} key={o.id} className="flex gap-3.5 px-4 py-3 hover:bg-white/[.03]">
+              <Link to={o.kind === 'load' ? `/portal/loads?id=${o.id}` : `/portal/opportunities?id=${o.id}`} key={o.id} className="flex gap-3.5 px-4 py-3 hover:bg-white/[.03]">
                 <ScoreRing score={o.s.score} v={o.s.verdict} size={48} />
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2"><span className="font-mono text-[10.5px] uppercase tracking-[.14em] text-graphite-400">{o.kind}</span><span className="text-[10px] font-mono text-graphite-400">· {o.source}</span></div>
+                  <div className="flex items-center gap-2"><KindBadge kind={o.kind} /><span className="text-[10px] font-mono text-graphite-400">· {o.source}</span></div>
                   <div className="font-semibold text-[14.5px] leading-snug truncate">{o.title}</div>
                   <div className="text-[12.5px] text-graphite-300 truncate">{o.org} · {o.s.distance} mi</div>
                 </div>
@@ -89,7 +92,10 @@ export default function Command() {
         </Panel>
         <Panel title="Needs attention" right={<Link to="/portal/compliance" className="text-[12px] font-mono uppercase tracking-[.14em] text-graphite-300 hover:text-white">Compliance</Link>}>
           <ul className="space-y-3">
-            {alerts.slice(0, 5).map(a => (
+            {myTasks.map(t => (
+              <li key={t.id} className="flex gap-3"><input type="checkbox" className="accent-crimson w-4 h-4 mt-0.5 shrink-0" onChange={() => update(t.id, { done: true, done_by: me.name })} title="Mark done" /><div><div className="text-[14px] font-semibold">{t.body.length > 90 ? t.body.slice(0, 90) + '…' : t.body}</div><div className="text-[12.5px] text-graphite-300">Task from {t.from_name}{t.due ? ` · due ${shortDate(t.due + 'T12:00:00')}` : ''} · <Link to="/portal/messages" className="underline hover:text-white">team board</Link></div></div></li>
+            ))}
+            {alerts.slice(0, Math.max(2, 5 - myTasks.length)).map(a => (
               <li key={a.id} className="flex gap-3"><AlertTriangle size={16} className={`${a.status === 'missing' ? 'text-crimson-400' : 'text-signal-amber'} mt-0.5 shrink-0`} /><div><div className="text-[14px] font-semibold">{a.item}</div><div className="text-[12.5px] text-graphite-300">{a.detail}</div></div></li>
             ))}
           </ul>
